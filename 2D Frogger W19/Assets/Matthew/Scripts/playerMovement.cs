@@ -11,6 +11,7 @@ public class playerMovement : MonoBehaviour
     Rigidbody2D m_rigidbody2D;
     bool moving;
     float halfway;
+    bool movebuttonDown;
 
     Vector3 targetPos;
 
@@ -19,6 +20,7 @@ public class playerMovement : MonoBehaviour
     {
         m_rigidbody2D = GetComponent<Rigidbody2D>();
         moving = false;
+        movebuttonDown = false;
         halfway = moveScale * 0.5f;
         doCorrectPos = true;
 
@@ -47,30 +49,32 @@ public class playerMovement : MonoBehaviour
         if (transform.position == targetPos){
             moving = false;
             if (Input.GetAxis("Horizontal") > 0 && !moving){
-                //moving = true;
+                movebuttonDown = true;
                 Debug.Log("Moving Right");
                 targetPos = new Vector3(transform.position.x + (1 * moveScale), transform.position.y, transform.position.z);
                 //m_rigidbody2D.MovePosition(new Vector2(position.x + (1 * moveScale), position.y));
 
             } else if (Input.GetAxis("Horizontal") < 0 && !moving){
-                //moving = true;
+                movebuttonDown = true;
                 Debug.Log("Moving Left");
                 targetPos = new Vector3(transform.position.x - (1 * moveScale), transform.position.y, transform.position.z);
                 //Vector3 position = transform.position;
                 //m_rigidbody2D.MovePosition(new Vector2(position.x + (-1 * moveScale), position.y));
             } else if (Input.GetAxis("Vertical") > 0 && !moving){
-                //moving = true;
+                movebuttonDown = true;
                 Debug.Log("Moving Up");
                 targetPos = new Vector3(transform.position.x, transform.position.y + (1 * moveScale), transform.position.z);
                 //Vector3 position = transform.position;
                 //m_rigidbody2D.MovePosition(new Vector2(position.x, position.y + (1 * moveScale)));
 
             } else if (Input.GetAxis("Vertical") < 0 && !moving){
-                // moving = true;
+                movebuttonDown = true;
                 Debug.Log("Moving Down");
                 targetPos = new Vector3(transform.position.x, transform.position.y - (1 * moveScale), transform.position.z);
                 //Vector3 position = transform.position;
                 // m_rigidbody2D.MovePosition(new Vector2(position.x, position.y + (-1 * moveScale)));
+            } else {
+                movebuttonDown = false;
             }
         } else {
             moving = true;
@@ -84,16 +88,18 @@ public class playerMovement : MonoBehaviour
 
     // Centers player onto grid square; important when player gets off moving object
     void correctPlayerPosition(){
-        if (!moving && doCorrectPos){
+        if (!moving && doCorrectPos && !movebuttonDown){
             if (transform.position.x % halfway != 0){
                 Debug.Log("Not centered! (x)");
                 float correctPosX = Mathf.Floor(transform.position.x) + halfway;
-                m_rigidbody2D.MovePosition(new Vector2(correctPosX, transform.position.y));
+                //m_rigidbody2D.MovePosition(new Vector2(correctPosX, transform.position.y));
+                targetPos = new Vector3(correctPosX, transform.position.y, transform.position.z);
             }
 
             if (transform.position.y % halfway != 0){
                 float correctPosY = Mathf.Floor(transform.position.y) + halfway;
-                m_rigidbody2D.MovePosition(new Vector2(transform.position.x, correctPosY));
+                //m_rigidbody2D.MovePosition(new Vector2(transform.position.x, correctPosY));
+                targetPos = new Vector3(transform.position.x, correctPosY, transform.position.z);
             }
         }
     }
