@@ -6,12 +6,12 @@ public class playerMovement : MonoBehaviour
 {
     [SerializeField] float moveScale = 1f;
     [SerializeField] float moveSpeed = 1f;
+    [SerializeField] bool snapToGridOn = true;
 
     bool doCorrectPos; // Set this to false when player is on moving platform and vice verca
     Rigidbody2D m_rigidbody2D;
-    bool moving;
     float halfway;
-    bool movebuttonDown;
+    bool reachedTargetPos;
 
     Vector3 targetPos;
 
@@ -19,87 +19,72 @@ public class playerMovement : MonoBehaviour
     void Start()
     {
         m_rigidbody2D = GetComponent<Rigidbody2D>();
-        moving = false;
-        movebuttonDown = false;
         halfway = moveScale * 0.5f;
         doCorrectPos = true;
+ 
 
         targetPos = transform.position;
+        reachedTargetPos = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        /*if (Input.GetAxis("Horizontal") == 0 && Input.GetAxis("Vertical") == 0){
-            moving = false;
-        }*/
-
         handleMoveInput();
-        //correctPlayerPosition();
     }
 
     void FixedUpdate()
     {
-        movePlayer();
         correctPlayerPosition();
+        movePlayer();
+    }
+
+    // Use this instead of "targetPos = newPosition"
+    void moveTargetPos(Vector3 newPosition)
+    {
+        targetPos = newPosition;
+        reachedTargetPos = false;
     }
 
     void handleMoveInput()
     {
-        if (transform.position == targetPos){
-            moving = false;
-            if (Input.GetAxis("Horizontal") > 0 && !moving){
-                movebuttonDown = true;
+        if (reachedTargetPos){
+            if (Input.GetAxis("Horizontal") > 0){
                 Debug.Log("Moving Right");
-                targetPos = new Vector3(transform.position.x + (1 * moveScale), transform.position.y, transform.position.z);
-                //m_rigidbody2D.MovePosition(new Vector2(position.x + (1 * moveScale), position.y));
-
-            } else if (Input.GetAxis("Horizontal") < 0 && !moving){
-                movebuttonDown = true;
+                moveTargetPos(new Vector3(transform.position.x + (1 * moveScale), transform.position.y, transform.position.z));
+            } else if (Input.GetAxis("Horizontal") < 0){
                 Debug.Log("Moving Left");
-                targetPos = new Vector3(transform.position.x - (1 * moveScale), transform.position.y, transform.position.z);
-                //Vector3 position = transform.position;
-                //m_rigidbody2D.MovePosition(new Vector2(position.x + (-1 * moveScale), position.y));
-            } else if (Input.GetAxis("Vertical") > 0 && !moving){
-                movebuttonDown = true;
+                moveTargetPos(new Vector3(transform.position.x - (1 * moveScale), transform.position.y, transform.position.z));
+            } else if (Input.GetAxis("Vertical") > 0){
                 Debug.Log("Moving Up");
-                targetPos = new Vector3(transform.position.x, transform.position.y + (1 * moveScale), transform.position.z);
-                //Vector3 position = transform.position;
-                //m_rigidbody2D.MovePosition(new Vector2(position.x, position.y + (1 * moveScale)));
-
-            } else if (Input.GetAxis("Vertical") < 0 && !moving){
-                movebuttonDown = true;
+                moveTargetPos(new Vector3(transform.position.x, transform.position.y + (1 * moveScale), transform.position.z));
+            } else if (Input.GetAxis("Vertical") < 0){
                 Debug.Log("Moving Down");
-                targetPos = new Vector3(transform.position.x, transform.position.y - (1 * moveScale), transform.position.z);
-                //Vector3 position = transform.position;
-                // m_rigidbody2D.MovePosition(new Vector2(position.x, position.y + (-1 * moveScale)));
-            } else {
-                movebuttonDown = false;
+                moveTargetPos(new Vector3(transform.position.x, transform.position.y - (1 * moveScale), transform.position.z));
             }
-        } else {
-            moving = true;
         }
     }
 
     void movePlayer()
     {
-        transform.position = Vector3.MoveTowards(transform.position, targetPos, Time.deltaTime * moveSpeed);
+        // Makes sure player only moves to targetPos once.
+        if (!reachedTargetPos){
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, Time.deltaTime * moveSpeed);
+            if (transform.position == targetPos){
+                reachedTargetPos = true;
+            }
+        }
     }
 
     // Centers player onto grid square; important when player gets off moving object
+    // CURRENTLY ONLY WORKS WITH SCALE 1
     void correctPlayerPosition(){
-        if (!moving && doCorrectPos && !movebuttonDown){
-            if (transform.position.x % halfway != 0){
-                Debug.Log("Not centered! (x)");
+        if (reachedTargetPos && doCorrectPos && snapToGridOn){
+            if (transform.position.x % halfway != 0 || transform.position.y % halfway != 0){
+                Debug.Log("Centering player");
                 float correctPosX = Mathf.Floor(transform.position.x) + halfway;
-                //m_rigidbody2D.MovePosition(new Vector2(correctPosX, transform.position.y));
-                targetPos = new Vector3(correctPosX, transform.position.y, transform.position.z);
-            }
-
-            if (transform.position.y % halfway != 0){
                 float correctPosY = Mathf.Floor(transform.position.y) + halfway;
-                //m_rigidbody2D.MovePosition(new Vector2(transform.position.x, correctPosY));
-                targetPos = new Vector3(transform.position.x, correctPosY, transform.position.z);
+                moveTargetPos(new Vector3(correctPosX, correctPosY, transform.position.z));
             }
         }
     }
